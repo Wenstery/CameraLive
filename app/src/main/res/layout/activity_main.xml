@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.view.cameralive.MainActivity">
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:id="@+id/url"
+        android:textColor="@color/accent_material_light" />
+
+    <SurfaceView
+        android:id="@+id/surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="#eee"
+        android:divider="?android:dividerVertical"
+        android:showDividers="middle">
+        <ToggleButton
+            android:id="@+id/toggleLive"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:checked="true"
+            android:drawableTop="@drawable/ic_stream"
+            android:ellipsize="end"
+            android:enabled="true"
+            android:fontFamily="sans-serif-condensed"
+            android:maxLines="2"
+            android:padding="8dp"
+            android:textAppearance="?android:textAppearanceLarge"
+            android:textColor="#c00"
+            android:textOff="@string/streamingOff"
+            android:textOn="@string/streamingOn"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/cameraContol"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/ic_play"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed"
+            android:hint="@string/endCapture"
+            android:maxLines="2"
+            android:onClick="endEvent"
+            android:padding="8dp"
+            android:textAppearance="?android:textAppearanceLarge"
+            android:textColorHint="#09c"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</LinearLayout>
+
+
+
+
+
+
+
+
