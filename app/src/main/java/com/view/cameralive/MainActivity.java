@@ -77,27 +77,32 @@ public class MainActivity extends Activity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!isChecked) {
-                    mPublisher = new RtmpPublish();
-                    mAudioRecorder = new AudioRecorder();
-                    mAudioRecorder.start(AUDIOSAMPLE);
-                    mAudioRecorder.setFrameCallback(new AudioRecorder.AudioFrameCallback() {
+                    new Thread() {
                         @Override
-                        public void handleFrame(byte[] audio_data, int length) {
-                            if (bRtmpInitFlag) {
-                                mPublisher.onEncodePcmData(audio_data, length);
-                            }
+                        public void run() {
+                            mPublisher = new RtmpPublish();
+                            mAudioRecorder = new AudioRecorder();
+                            mAudioRecorder.start(AUDIOSAMPLE);
+                            mAudioRecorder.setFrameCallback(new AudioRecorder.AudioFrameCallback() {
+                                @Override
+                                public void handleFrame(byte[] audio_data, int length) {
+                                    if (bRtmpInitFlag) {
+                                        mPublisher.onEncodePcmData(audio_data, length);
+                                    }
+                                }
+                            });
+                            mVideoGrabber.setFrameCallback(new VideoGrabber.FrameCallback() {
+                                @Override
+                                public void handleFrame(byte[] yuv_image) {
+                                    if (bRtmpInitFlag) {
+                                        mPublisher.onGetVideoData(yuv_image);
+                                    }
+                                }
+                            });
+                            mVideoGrabber.setBufferCallback();
+                            bRtmpInitFlag = mPublisher.startPublish(mUrlText.getText().toString(), mAudioRecorder.getChannels(), mAudioRecorder.getSamplerate());
                         }
-                    });
-                    mVideoGrabber.setFrameCallback(new VideoGrabber.FrameCallback() {
-                        @Override
-                        public void handleFrame(byte[] yuv_image) {
-                            if (bRtmpInitFlag) {
-                                mPublisher.onGetVideoData(yuv_image);
-                            }
-                        }
-                    });
-                    mVideoGrabber.setBufferCallback();
-                    bRtmpInitFlag = mPublisher.startPublish(mUrlText.getText().toString(), mAudioRecorder.getChannels(), mAudioRecorder.getSamplerate());
+                    }.start();
 
 
                 } else {
