@@ -35,7 +35,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         mSurfaceView = (SurfaceView) findViewById(R.id.surface_view);
         mSurfaceHolder = mSurfaceView.getHolder();
-
         mSurfaceHolder.addCallback(new SurfaceHolder.Callback2() {
             @Override
             public void surfaceRedrawNeeded(SurfaceHolder holder) {
@@ -77,28 +76,33 @@ public class MainActivity extends Activity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!isChecked) {
-                    mPublisher = new RtmpPublish();
-                    mAudioRecorder = new AudioRecorder();
-                    mAudioRecorder.start(AUDIOSAMPLE);
-                    mAudioRecorder.setFrameCallback(new AudioRecorder.AudioFrameCallback() {
+                    new Thread() {
                         @Override
-                        public void handleFrame(byte[] audio_data, int length) {
-                            if (bRtmpInitFlag) {
-                                mPublisher.onEncodePcmData(audio_data, length);
-                            }
+                        public void run() {
+                            mPublisher = new RtmpPublish();
+                            mAudioRecorder = new AudioRecorder();
+                            mAudioRecorder.start(AUDIOSAMPLE);
+                            mAudioRecorder.setFrameCallback(new AudioRecorder.AudioFrameCallback() {
+                                @Override
+                                public void handleFrame(byte[] audio_data, int length) {
+                                    if (bRtmpInitFlag) {
+                                        mPublisher.onEncodePcmData(audio_data, length);
+                                    }
+                                }
+                            });
+                            mVideoGrabber.setFrameCallback(new VideoGrabber.FrameCallback() {
+                                @Override
+                                public void handleFrame(byte[] yuv_image) {
+                                    if (bRtmpInitFlag) {
+                                        mPublisher.onGetVideoData(yuv_image);
+                                    }
+                                }
+                            });
+                            mVideoGrabber.setBufferCallback();
+                            bRtmpInitFlag = mPublisher.startPublish(mUrlText.getText().
+                                    toString(), mAudioRecorder.getChannels(), mAudioRecorder.getSamplerate());
                         }
-                    });
-                    mVideoGrabber.setFrameCallback(new VideoGrabber.FrameCallback() {
-                        @Override
-                        public void handleFrame(byte[] yuv_image) {
-                            if (bRtmpInitFlag) {
-                                mPublisher.onGetVideoData(yuv_image);
-                            }
-                        }
-                    });
-                    mVideoGrabber.setBufferCallback();
-                    bRtmpInitFlag = mPublisher.startPublish(mUrlText.getText().toString(), mAudioRecorder.getChannels(), mAudioRecorder.getSamplerate());
-
+                    }.start();
 
                 } else {
                     bRtmpInitFlag = false;
