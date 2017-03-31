@@ -39,6 +39,7 @@ public class VideoGrabber {
                 camera.setParameters(parameters);
                 setCameraDisplayOrientation(act, Camera.CameraInfo.CAMERA_FACING_BACK, camera);
                 camera.setPreviewDisplay(holder);
+                setBufferCallback();
                 camera.startPreview();
                 Log.d(TAG, "start preview");
             }

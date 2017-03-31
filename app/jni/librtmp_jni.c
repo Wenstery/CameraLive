@@ -62,12 +62,10 @@ int SendVideoSpsPps(unsigned char *data,int size,int dts)
 {
 	RTMPPacket  *packet = NULL;
 	unsigned char * body = NULL;
-    int i;
-    packet = (RTMPPacket *)malloc(RTMP_HEAD_SIZE+1024);
+    packet = (RTMPPacket *)malloc(RTMP_HEAD_SIZE + 1024);
     memset(packet,0,RTMP_HEAD_SIZE);
     packet->m_body = (char *)packet + RTMP_HEAD_SIZE;
 	body = (unsigned char *)packet->m_body;
-	i = 0;
     memcpy(body,data,size);
 	packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
 	packet->m_nBodySize = size;
@@ -78,17 +76,7 @@ int SendVideoSpsPps(unsigned char *data,int size,int dts)
     packet->m_nInfoField2 = m_pRtmp->m_stream_id;
     int nRet = 0;
     if (RTMP_IsConnected(m_pRtmp)) {
-      LOGI("is connected before send spspps!");
 	  nRet = RTMP_SendPacket(m_pRtmp,packet,TRUE);
-      LOGI("send sps-pps %d",nRet);
-    }
-    if (RTMP_IsConnected(m_pRtmp)) {
-      LOGI("is connected after send spspps!");
-    }else {
-      LOGI("not connected after send spspps!");
-    }
-    for( i = 0;i< size;i++) {
-        LOGI("data is : %x", body[i]);
     }
 	free(packet);
     return nRet;
@@ -117,10 +105,7 @@ int SendH264Packet(unsigned char *data,unsigned int size,unsigned int nTimeStamp
     int nRet =0;
     if (RTMP_IsConnected(m_pRtmp))
     {
-        LOGI("send data h.264 : %d", size);
     	nRet = RTMP_SendPacket(m_pRtmp,packet,TRUE);
-    } else {
-        LOGI("not connected while send h.264 data!");
     }
     free(packet);
     return nRet;
@@ -148,47 +133,46 @@ int SendAudioPacket(unsigned char *data, unsigned int size, unsigned int nTimeSt
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT jboolean JNICALL nativeRtmpInit(JNIEnv *env, jobject thiz, jstring rtmp_url){
-   const jbyte * rtmpUrl = (*env)->GetStringUTFChars(env, rtmp_url, NULL);
-   int ret = RTMP264_Connect(rtmpUrl);
-   (*env)->ReleaseStringUTFChars(env, rtmp_url, rtmpUrl);
-   if (ret > 0){
-       LOGI("rtmp init ok!");
-       return JNI_TRUE;
-   } else {
-       LOGI("rtmp init failed!");
-       return JNI_FALSE;
-   }
-
-}
-
-JNIEXPORT jint JNICALL  nativeWriteVideoFrame(JNIEnv *env, jobject thiz, jbyteArray video_data , jlong pts, jint SpsPpsFlag){
-    int dts = ((int)(pts/1000)) & 0x7fffffff;
-    int length = (*env)->GetArrayLength(env, video_data);
-    unsigned char *video = (*env)->GetByteArrayElements(env,video_data,0);
-    int nRet = 0;
-    if (SpsPpsFlag == 0) {
-        nRet =  SendVideoSpsPps(video, length, dts);
-    } else {
-        nRet = SendH264Packet(video, length, dts);
+    JNIEXPORT jboolean JNICALL nativeRtmpInit(JNIEnv *env, jobject thiz, jstring rtmp_url){
+        const jbyte * rtmpUrl = (*env)->GetStringUTFChars(env, rtmp_url, NULL);
+        int ret = RTMP264_Connect(rtmpUrl);
+        (*env)->ReleaseStringUTFChars(env, rtmp_url, rtmpUrl);
+        if (ret > 0){
+            LOGI("rtmp init ok!");
+            return JNI_TRUE;
+        } else {
+            LOGI("rtmp init failed!");
+            return JNI_FALSE;
+        }
     }
-    return nRet;
-}
 
-JNIEXPORT jint JNICALL  nativeWriteAudioFrame(JNIEnv *env,jobject thiz, jbyteArray audio_data, jlong pts){
-    int dts = ((int)(pts/1000)) & 0x7fffffff;
-    int length = (*env)->GetArrayLength(env, audio_data);
-    unsigned char *audio = (*env)->GetByteArrayElements(env, audio_data, 0);
-    int nRet = 0;
-    nRet = SendAudioPacket(audio, length, dts);
-    return nRet;
-}
+    JNIEXPORT jint JNICALL  nativeWriteVideoFrame(JNIEnv *env, jobject thiz, jbyteArray video_data , jlong pts, jint SpsPpsFlag){
+        int dts = ((int)(pts/1000)) & 0x7fffffff;
+        int length = (*env)->GetArrayLength(env, video_data);
+        unsigned char *video = (*env)->GetByteArrayElements(env,video_data,0);
+        int nRet = 0;
+        if (SpsPpsFlag == 0) {
+            nRet =  SendVideoSpsPps(video, length, dts);
+        } else {
+            nRet = SendH264Packet(video, length, dts);
+        }
+        return nRet;
+    }
 
-JNIEXPORT void JNICALL  nativeRtmpRelease(JNIEnv *env, jobject thiz){
-    RTMP264_Close();
-}
+    JNIEXPORT jint JNICALL  nativeWriteAudioFrame(JNIEnv *env,jobject thiz, jbyteArray audio_data, jlong pts){
+        int dts = ((int)(pts/1000)) & 0x7fffffff;
+        int length = (*env)->GetArrayLength(env, audio_data);
+        unsigned char *audio = (*env)->GetByteArrayElements(env, audio_data, 0);
+        int nRet = 0;
+        nRet = SendAudioPacket(audio, length, dts);
+        return nRet;
+    }
 
-static const char *classPathName = "com/view/cameralive/RtmpWorker";
+    JNIEXPORT void JNICALL  nativeRtmpRelease(JNIEnv *env, jobject thiz){
+        RTMP264_Close();
+    }
+
+    static const char *classPathName = "com/view/cameralive/RtmpWorker";
 
 
     static JNINativeMethod method_table[] = {

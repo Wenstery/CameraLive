@@ -84,9 +84,5 @@ public class AudioRecorder {
         return aChannelConfig == AudioFormat.CHANNEL_IN_STEREO ? 2 : 1;
     }
 
-    public int getSamplerate() {
-        return samplerate;
-    }
-
 
 }

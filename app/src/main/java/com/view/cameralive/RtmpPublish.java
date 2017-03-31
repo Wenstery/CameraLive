@@ -1,9 +1,11 @@
 package com.view.cameralive;
 
+import android.app.Activity;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
+import android.view.SurfaceHolder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -19,21 +21,63 @@ public class RtmpPublish {
     private static int VIDEO_HEIGHT = 480;
     private MediaCodec vcodec = null;
     private MediaCodec acodec = null;
-    private static int vbitrate = 512000;
-    private static int abitrate = 32000;
-    private static int framerate = 25;
+    private static final int vbitrate = 512000;
+    private static final int abitrate = 32000;
+    private static final int framerate = 25;
+    private static final int aSamplerate = 441000;
+    private int aChannelCount;
     private MediaCodec.BufferInfo vebi = new MediaCodec.BufferInfo();
     private MediaCodec.BufferInfo aebi = new MediaCodec.BufferInfo();
     private long mPresentTimeUs;
     private RtmpWorker rtmpWorker;
-    private int aSamplerate;
-    private int aChannelCount;
+    private AudioRecorder mAudioRecorder;
+    private VideoGrabber mVideoGrabber;
+    private boolean bRtmpInitFlag = false;
 
-    public boolean startPublish(String rtmpUrl,int aChannel, int samplerate) {
+    public void setbRtmpInitFlag(boolean flag) {
+        bRtmpInitFlag = flag;
+    }
+
+    public void initCamera(Activity act, SurfaceHolder holder) {
+        mVideoGrabber.initCamera(act, holder);
+    }
+
+    public void releaseCamera() {
+        mVideoGrabber.releaseCamera();
+    }
+
+    public void initPublish() {
+        mAudioRecorder = new AudioRecorder();
+        mVideoGrabber = new VideoGrabber();
+    }
+
+    public boolean startPublish(String rtmpUrl) {
+        mAudioRecorder.start(aSamplerate);
+        mAudioRecorder.setFrameCallback(new AudioRecorder.AudioFrameCallback() {
+            @Override
+            public void handleFrame(byte[] audio_data, int length) {
+                if (bRtmpInitFlag) {
+                    onEncodePcmData(audio_data, length);
+                }
+            }
+        });
+        aChannelCount = mAudioRecorder.getChannels();
+        mVideoGrabber.setFrameCallback(new VideoGrabber.FrameCallback() {
+            @Override
+            public void handleFrame(byte[] yuv_image) {
+                if (bRtmpInitFlag) {
+                    onGetVideoData(yuv_image);
+                }
+            }
+        });
+        bRtmpInitFlag = startWorkerThread(rtmpUrl);
+        return true;
+
+    }
+
+    public boolean startWorkerThread(String rtmpUrl) {
         if (rtmpUrl != null) {
-            rtmpWorker = new RtmpWorker(aChannel,samplerate);
-            aChannelCount = aChannel;
-            aSamplerate = samplerate;
+            rtmpWorker = new RtmpWorker(aChannelCount, aSamplerate);
             if (rtmpWorker.startWorker(rtmpUrl) && startEncode()) {
                 return true;
             } else {
@@ -42,12 +86,13 @@ public class RtmpPublish {
         } else {
             return false;
         }
-
     }
 
     public void stopPublish() {
+        mAudioRecorder.stop();
         stopEncode();
         rtmpWorker.stopWorker();
+        Log.d(TAG, "stop publish!");
 
     }
 
@@ -73,6 +118,7 @@ public class RtmpPublish {
             e.printStackTrace();
             return false;
         }
+        aChannelCount = mAudioRecorder.getChannels();
         MediaFormat audioFormat = MediaFormat.createAudioFormat(ACODEC, aSamplerate, aChannelCount);
         audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, abitrate);
         audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 0);
@@ -80,6 +126,7 @@ public class RtmpPublish {
 
         vcodec.start();
         acodec.start();
+        Log.d(TAG, "start encode!");
         return true;
     }
 
@@ -94,6 +141,7 @@ public class RtmpPublish {
             acodec.release();
             acodec = null;
         }
+        Log.d(TAG, "stop encode!");
 
     }
 
