@@ -36,16 +36,16 @@ int RTMP264_Connect(const char* url) {
         RTMP_Close(m_pRtmp);
         RTMP_Free(m_pRtmp);
         return FALSE;
-	}
+    }
     return TRUE;
 }
 
 void RTMP264_Close() {
-     if (m_pRtmp) {
-         RTMP_Close(m_pRtmp);
-         RTMP_Free(m_pRtmp);
-         m_pRtmp = NULL;
-	}
+    if (m_pRtmp) {
+        RTMP_Close(m_pRtmp);
+        RTMP_Free(m_pRtmp);
+        m_pRtmp = NULL;
+    }
 }
 
 int SendVideoSpsPps(unsigned char *data,int size,int dts) {
@@ -54,28 +54,28 @@ int SendVideoSpsPps(unsigned char *data,int size,int dts) {
     packet = (RTMPPacket *)malloc(RTMP_HEAD_SIZE + 1024);
     memset(packet,0,RTMP_HEAD_SIZE);
     packet->m_body = (char *)packet + RTMP_HEAD_SIZE;
-	body = (unsigned char *)packet->m_body;
+    body = (unsigned char *)packet->m_body;
     memcpy(body,data,size);
-	packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
-	packet->m_nBodySize = size;
-	packet->m_nChannel = 0x04;
-	packet->m_nTimeStamp = 0;
-	packet->m_hasAbsTimestamp = 0;
-	packet->m_headerType = RTMP_PACKET_SIZE_MEDIUM;
+    packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
+    packet->m_nBodySize = size;
+    packet->m_nChannel = 0x04;
+    packet->m_nTimeStamp = 0;
+    packet->m_hasAbsTimestamp = 0;
+    packet->m_headerType = RTMP_PACKET_SIZE_MEDIUM;
     packet->m_nInfoField2 = m_pRtmp->m_stream_id;
     int nRet = 0;
     if (RTMP_IsConnected(m_pRtmp)) {
         nRet = RTMP_SendPacket(m_pRtmp,packet,TRUE);
     }
-	free(packet);
+    free(packet);
     return nRet;
 }
 
 int SendH264Packet(unsigned char *data,unsigned int size,unsigned int nTimeStamp) {
     if (data == NULL && size < 11) {
         return FALSE;
-	}
-	RTMPPacket  *packet = NULL;
+    }
+    RTMPPacket  *packet = NULL;
     packet = (RTMPPacket *) malloc(RTMP_HEAD_SIZE + size);
     memset(packet, 0, RTMP_HEAD_SIZE);
     packet->m_body = (char *) packet + RTMP_HEAD_SIZE;
@@ -102,7 +102,6 @@ int SendAudioPacket(unsigned char *data, unsigned int size, unsigned int nTimeSt
     RTMPPacket_Reset(&packet);
     RTMPPacket_Alloc(&packet, size);
     memcpy(packet.m_body, data, size);
-
     packet.m_headerType  = RTMP_PACKET_SIZE_MEDIUM;
     packet.m_packetType = RTMP_PACKET_TYPE_AUDIO;
     packet.m_hasAbsTimestamp = 0;
@@ -110,7 +109,6 @@ int SendAudioPacket(unsigned char *data, unsigned int size, unsigned int nTimeSt
     packet.m_nTimeStamp = nTimeStamp;
     packet.m_nInfoField2 = m_pRtmp->m_stream_id;
     packet.m_nBodySize = size;
-
     int nRet = RTMP_SendPacket(m_pRtmp, &packet, TRUE);
     RTMPPacket_Free(&packet);
     return nRet;
@@ -123,7 +121,7 @@ extern "C" {
         const jbyte * rtmpUrl = (*env)->GetStringUTFChars(env, rtmp_url, NULL);
         int ret = RTMP264_Connect(rtmpUrl);
         (*env)->ReleaseStringUTFChars(env, rtmp_url, rtmpUrl);
-        if (ret > 0){
+        if (ret > 0) {
             LOGI("rtmp init ok!");
             return JNI_TRUE;
         } else {
@@ -159,7 +157,6 @@ extern "C" {
     }
 
     static const char *classPathName = "com/view/cameralive/RtmpWorker";
-
 
     static JNINativeMethod method_table[] = {
         {"nativeRtmpInit", "(Ljava/lang/String;)Z", (void *)&nativeRtmpInit},
