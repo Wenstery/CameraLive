@@ -20,48 +20,37 @@ JNIEXPORT void JNICALL  nativeRtmpRelease(JNIEnv *env, jobject thiz);
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "librtmp_jni", __VA_ARGS__)
 #define RTMP_HEAD_SIZE   (sizeof(RTMPPacket)+RTMP_MAX_HEADER_SIZE)
 
-int RTMP264_Connect(const char* url)
-{
-	m_pRtmp = RTMP_Alloc();
-	RTMP_Init(m_pRtmp);
-
-	if (RTMP_SetupURL(m_pRtmp,(char*)url) == FALSE)
-	{
-		RTMP_Free(m_pRtmp);
+int RTMP264_Connect(const char* url) {
+    m_pRtmp = RTMP_Alloc();
+    RTMP_Init(m_pRtmp);
+    if (RTMP_SetupURL(m_pRtmp,(char*)url) == FALSE) {
+        RTMP_Free(m_pRtmp);
         return FALSE;
     }
-
-	RTMP_EnableWrite(m_pRtmp);
-
-	if (RTMP_Connect(m_pRtmp, NULL) == FALSE)
-	{
-		RTMP_Free(m_pRtmp);
-		return FALSE;
+    RTMP_EnableWrite(m_pRtmp);
+    if (RTMP_Connect(m_pRtmp, NULL) == FALSE) {
+        RTMP_Free(m_pRtmp);
+        return FALSE;
+    }
+    if (RTMP_ConnectStream(m_pRtmp,0) == FALSE) {
+        RTMP_Close(m_pRtmp);
+        RTMP_Free(m_pRtmp);
+        return FALSE;
 	}
-
-	if (RTMP_ConnectStream(m_pRtmp,0) == FALSE)
-	{
-		RTMP_Close(m_pRtmp);
-		RTMP_Free(m_pRtmp);
-		return FALSE;
-	}
-	return TRUE;
+    return TRUE;
 }
 
-void RTMP264_Close()
-{
-	if(m_pRtmp)
-	{
-		RTMP_Close(m_pRtmp);
-		RTMP_Free(m_pRtmp);
-		m_pRtmp = NULL;
+void RTMP264_Close() {
+     if (m_pRtmp) {
+         RTMP_Close(m_pRtmp);
+         RTMP_Free(m_pRtmp);
+         m_pRtmp = NULL;
 	}
 }
 
-int SendVideoSpsPps(unsigned char *data,int size,int dts)
-{
-	RTMPPacket  *packet = NULL;
-	unsigned char * body = NULL;
+int SendVideoSpsPps(unsigned char *data,int size,int dts) {
+    RTMPPacket  *packet = NULL;
+    unsigned char * body = NULL;
     packet = (RTMPPacket *)malloc(RTMP_HEAD_SIZE + 1024);
     memset(packet,0,RTMP_HEAD_SIZE);
     packet->m_body = (char *)packet + RTMP_HEAD_SIZE;
@@ -76,18 +65,16 @@ int SendVideoSpsPps(unsigned char *data,int size,int dts)
     packet->m_nInfoField2 = m_pRtmp->m_stream_id;
     int nRet = 0;
     if (RTMP_IsConnected(m_pRtmp)) {
-	  nRet = RTMP_SendPacket(m_pRtmp,packet,TRUE);
+        nRet = RTMP_SendPacket(m_pRtmp,packet,TRUE);
     }
 	free(packet);
     return nRet;
 }
 
-int SendH264Packet(unsigned char *data,unsigned int size,unsigned int nTimeStamp)
-{
-	if(data == NULL && size<11){
-		return FALSE;
+int SendH264Packet(unsigned char *data,unsigned int size,unsigned int nTimeStamp) {
+    if (data == NULL && size < 11) {
+        return FALSE;
 	}
-
 	RTMPPacket  *packet = NULL;
     packet = (RTMPPacket *) malloc(RTMP_HEAD_SIZE + size);
     memset(packet, 0, RTMP_HEAD_SIZE);
@@ -103,15 +90,14 @@ int SendH264Packet(unsigned char *data,unsigned int size,unsigned int nTimeStamp
     packet->m_headerType = RTMP_PACKET_SIZE_LARGE;
     packet->m_nTimeStamp = nTimeStamp;
     int nRet =0;
-    if (RTMP_IsConnected(m_pRtmp))
-    {
-    	nRet = RTMP_SendPacket(m_pRtmp,packet,TRUE);
+    if (RTMP_IsConnected(m_pRtmp)) {
+        nRet = RTMP_SendPacket(m_pRtmp,packet,TRUE);
     }
     free(packet);
     return nRet;
 }
 
-int SendAudioPacket(unsigned char *data, unsigned int size, unsigned int nTimeStamp){
+int SendAudioPacket(unsigned char *data, unsigned int size, unsigned int nTimeStamp) {
     RTMPPacket packet;
     RTMPPacket_Reset(&packet);
     RTMPPacket_Alloc(&packet, size);
@@ -133,7 +119,7 @@ int SendAudioPacket(unsigned char *data, unsigned int size, unsigned int nTimeSt
 #ifdef __cplusplus
 extern "C" {
 #endif
-    JNIEXPORT jboolean JNICALL nativeRtmpInit(JNIEnv *env, jobject thiz, jstring rtmp_url){
+    JNIEXPORT jboolean JNICALL nativeRtmpInit(JNIEnv *env, jobject thiz, jstring rtmp_url) {
         const jbyte * rtmpUrl = (*env)->GetStringUTFChars(env, rtmp_url, NULL);
         int ret = RTMP264_Connect(rtmpUrl);
         (*env)->ReleaseStringUTFChars(env, rtmp_url, rtmpUrl);
@@ -146,7 +132,7 @@ extern "C" {
         }
     }
 
-    JNIEXPORT jint JNICALL  nativeWriteVideoFrame(JNIEnv *env, jobject thiz, jbyteArray video_data , jlong pts, jint SpsPpsFlag){
+    JNIEXPORT jint JNICALL  nativeWriteVideoFrame(JNIEnv *env, jobject thiz, jbyteArray video_data , jlong pts, jint SpsPpsFlag) {
         int dts = ((int)(pts/1000)) & 0x7fffffff;
         int length = (*env)->GetArrayLength(env, video_data);
         unsigned char *video = (*env)->GetByteArrayElements(env,video_data,0);
@@ -159,7 +145,7 @@ extern "C" {
         return nRet;
     }
 
-    JNIEXPORT jint JNICALL  nativeWriteAudioFrame(JNIEnv *env,jobject thiz, jbyteArray audio_data, jlong pts){
+    JNIEXPORT jint JNICALL  nativeWriteAudioFrame(JNIEnv *env,jobject thiz, jbyteArray audio_data, jlong pts) {
         int dts = ((int)(pts/1000)) & 0x7fffffff;
         int length = (*env)->GetArrayLength(env, audio_data);
         unsigned char *audio = (*env)->GetByteArrayElements(env, audio_data, 0);
@@ -168,7 +154,7 @@ extern "C" {
         return nRet;
     }
 
-    JNIEXPORT void JNICALL  nativeRtmpRelease(JNIEnv *env, jobject thiz){
+    JNIEXPORT void JNICALL  nativeRtmpRelease(JNIEnv *env, jobject thiz) {
         RTMP264_Close();
     }
 
